@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: demo_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: demo_db
+
+  keycloak-db:
+    image: postgres:14
+    container_name: demo_keycloak_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    container_name: demo_keycloak
+    depends_on:
+      - keycloak-db
+    environment:
+      DB_VENDOR: postgres
+      DB_ADDR: keycloak-db
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: secret
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command:
+      - start-dev
+      - "--import-realm"
+    volumes:
+      - ./keycloak/import-realm.json:/opt/keycloak/data/import/realm.json:ro
+    ports:
+      - "8080:8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: demo_app
+    depends_on:
+      - mongo
+      - keycloak
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: demo_db
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/demo-realm
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/public"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  krakend:
+    image: devopsfaith/krakend:2.5.1
+    container_name: demo_krakend
+    depends_on:
+      app:
+        condition: service_healthy
+      # Just wait for Keycloak to start, not become healthy
+      keycloak:
+        condition: service_started
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json:ro
+    ports:
+      - "8081:8080"
+    command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
+    restart: unless-stopped
+
+volumes:
+  keycloak_db_data:

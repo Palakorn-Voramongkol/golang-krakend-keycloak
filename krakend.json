@@ -1,0 +1,58 @@
+{
+  "version": 3,
+  "name": "krakend-gateway",
+  "port": 8080,
+  "endpoints": [
+    {
+      "endpoint": "/public",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": [
+            "http://app:3000"
+          ],
+          "url_pattern": "/public"
+        }
+      ]
+    },
+    {
+      "endpoint": "/profile",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": [
+            "http://app:3000"
+          ],
+          "url_pattern": "/profile",
+          "encoding": "no_op"
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend-jose/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/demo-realm/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "audience": [
+            "fiber-app"
+          ],
+          "issuer": "http://keycloak:8080/realms/demo-realm",
+          "roles_key": "roles",
+          "roles": [
+            "user"
+          ],
+          "propagate_token": true
+        }
+      }
+    }
+  ],
+  "extra_config": {
+    "github.com/devopsfaith/krakend-gologging": {
+      "level": "DEBUG",
+      "prefix": "[KRAKEND]",
+      "syslog": false,
+      "stdout": true
+    }
+  }
+}
