@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mongo:
@@ -22,7 +22,9 @@ services:
       - keycloak_db_data:/var/lib/postgresql/data
 
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
+    build:
+      context: .
+      dockerfile: Dockerfile.keycloak
     container_name: demo_keycloak
     depends_on:
       - keycloak-db
@@ -32,55 +34,21 @@ services:
       DB_DATABASE: keycloak
       DB_USER: keycloak
       DB_PASSWORD: secret
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-    # production “start” (not dev), but explicitly allow HTTP and disable strict-hostname
     command:
-      - start
+      - start-dev
       - "--import-realm"
-      - "--http-enabled=true"
-      - "--hostname-strict=false"
     volumes:
       - ./keycloak/import-realm.json:/opt/keycloak/data/import/realm.json:ro
-    ports:
-      - "8080:8080"
-
-  kong-database:
-    image: postgres:14
-    container_name: kong_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: kong
-      POSTGRES_DB: kong
-      POSTGRES_PASSWORD: kong
-    volumes:
-      - kong_db_data:/var/lib/postgresql/data
-
-  kong:
-    image: kong:3.5
-    container_name: demo_kong
-    depends_on:
-      - kong-database
-    environment:
-      KONG_DATABASE: "postgres"
-      KONG_PG_HOST: kong-database
-      KONG_PG_DATABASE: kong
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_LISTEN: 0.0.0.0:8001
-    command: ["kong", "docker-start"]
-    volumes:
-      - ./kong/kong.yml:/etc/kong/kong.yml:ro
-    ports:
-      - "8000:8000"   # proxy
-      - "8443:8443"   # proxy (SSL)
-      - "8001:8001"   # admin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/demo-realm/protocol/openid-connect/certs"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   app:
     build:
@@ -89,6 +57,7 @@ services:
     container_name: demo_app
     depends_on:
       - mongo
+      - keycloak
     environment:
       MONGO_URI: mongodb://mongo:27017
       MONGO_DB: demo_db
@@ -96,7 +65,27 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/public"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  krakend:
+    image: devopsfaith/krakend:2.5.1
+    container_name: demo_krakend
+    depends_on:
+      app:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json:ro
+    ports:
+      - "8081:8080"
+    command: ["run", "-d", "-c", "/etc/krakend/krakend.json"]
+    restart: unless-stopped
 
 volumes:
-  kong_db_data:
   keycloak_db_data:
