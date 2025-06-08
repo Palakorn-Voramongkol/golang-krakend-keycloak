@@ -66,6 +66,7 @@ sequenceDiagram
 ├── krakend.json               # KrakenD gateway configuration
 ├── main.go                    # Go backend application source code
 ├── test-all.ps1               # PowerShell automated test script
+├── test-all.sh                # Linux/macOS automated test script
 └── keycloak/
     └── import-realm.json      # Keycloak realm, users, and client definitions
 ```
