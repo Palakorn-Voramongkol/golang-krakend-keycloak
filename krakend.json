@@ -4,6 +4,19 @@
   "port": 8080,
   "endpoints": [
     {
+      "endpoint": "/login",                     
+      "method": "POST",
+      "input_headers": ["Content-Type"],         
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://keycloak:8080"],     
+          "url_pattern": "/realms/demo-realm/protocol/openid-connect/token",
+          "encoding": "form"                     
+        }
+      ]
+    },
+    {
       "endpoint": "/public",
       "method": "GET",
       "output_encoding": "json",

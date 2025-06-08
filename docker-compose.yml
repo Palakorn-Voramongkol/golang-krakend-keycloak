@@ -43,8 +43,6 @@ services:
       - "--import-realm"
     volumes:
       - ./keycloak/import-realm.json:/opt/keycloak/data/import/realm.json:ro
-    ports:
-      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/realms/demo-realm/protocol/openid-connect/certs"]
       interval: 10s
