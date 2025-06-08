@@ -34,24 +34,25 @@ In this secure architecture, the **only** entry point for external traffic is th
 ```mermaid
 sequenceDiagram
     participant Client
-    participant KrakenD
+    participant KrakenD Gateway
     participant Keycloak
-    participant GoApp
+    participant Backend API
 
-    Client->>+KrakenD: POST /login (user & pass)
-    KrakenD->>+Keycloak: POST /realms/demo-realm/protocol/openid-connect/token
-    Keycloak-->>-KrakenD: JWT
-    KrakenD-->>-Client: JWT
+    Note over Client, Keycloak: Step 1: Client gets a token via the Gateway
+    Client->>+KrakenD Gateway: POST POST /login (user & pass)
+    KrakenD Gateway->>+Keycloak: POST /realms/.../token (Forward Request)
+    Keycloak-->>-KrakenD Gateway: JWT
+    KrakenD Gateway-->>-Client: JWT
 
-    Client->>+KrakenD: GET /profile (Authorization: Bearer JWT)
-    KrakenD->>+Keycloak: GET /realms/demo-realm/protocol/openid-connect/certs
-    Keycloak-->>-KrakenD: JWKS
+    Note over Client, Backend API: Step 2: Client uses token to access protected API
+    Client->>+KrakenD Gateway: GET /profile (Authorization: Bearer JWT)
+    
+    Note over KrakenD Gateway: JWT Plugin validates token → OK
 
-    Note over KrakenD: Validate signature, issuer, audience, roles
-    KrakenD->>+GoApp: GET /profile (forward)
-    GoApp-->>-KrakenD: 200 OK ({"message":"Hello, alice", ...})
-    KrakenD-->>-Client: 200 OK ({"message":"Hello, alice", ...})
-```
+    KrakenD Gateway->>+Backend API: GET /profile (Forward Request)
+    Backend API-->>-KrakenD Gateway: 200 OK ({"message":"Hello, alice", ...})
+    KrakenD Gateway-->>-Client: 200 OK ({"message":"Hello, alice", ...})
+````
 
 ## Project Structure
 
