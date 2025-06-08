@@ -22,7 +22,9 @@ services:
       - keycloak_db_data:/var/lib/postgresql/data
 
   keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
+    build:
+      context: .
+      dockerfile: Dockerfile.keycloak
     container_name: demo_keycloak
     depends_on:
       - keycloak-db
@@ -43,6 +45,12 @@ services:
       - ./keycloak/import-realm.json:/opt/keycloak/data/import/realm.json:ro
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/demo-realm/protocol/openid-connect/certs"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   app:
     build:
@@ -72,14 +80,13 @@ services:
     depends_on:
       app:
         condition: service_healthy
-      # Just wait for Keycloak to start, not become healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./krakend.json:/etc/krakend/krakend.json:ro
     ports:
       - "8081:8080"
-    command: [ "run", "-d", "-c", "/etc/krakend/krakend.json" ]
+    command: ["run", "-d", "-c", "/etc/krakend/krakend.json"]
     restart: unless-stopped
 
 volumes:

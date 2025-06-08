@@ -9,9 +9,7 @@
       "output_encoding": "json",
       "backend": [
         {
-          "host": [
-            "http://app:3000"
-          ],
+          "host": ["http://app:3000"],
           "url_pattern": "/public"
         }
       ]
@@ -19,29 +17,83 @@
     {
       "endpoint": "/profile",
       "method": "GET",
+      "input_headers": ["Authorization"],
       "output_encoding": "json",
       "backend": [
         {
-          "host": [
-            "http://app:3000"
-          ],
+          "host": ["http://app:3000"],
           "url_pattern": "/profile",
           "encoding": "no_op"
         }
       ],
       "extra_config": {
+        "github.com/devopsfaith/krakend/proxy": {
+          "headers_to_pass": ["Authorization"]
+        },
         "github.com/devopsfaith/krakend-jose/validator": {
           "alg": "RS256",
           "jwk_url": "http://keycloak:8080/realms/demo-realm/protocol/openid-connect/certs",
           "disable_jwk_security": true,
-          "audience": [
-            "fiber-app"
-          ],
+          "audience": ["fiber-app"],
           "issuer": "http://keycloak:8080/realms/demo-realm",
           "roles_key": "roles",
-          "roles": [
-            "user"
-          ],
+          "roles": ["user"],
+          "propagate_token": true
+        }
+      }
+    },
+    {
+      "endpoint": "/user",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://app:3000"],
+          "url_pattern": "/user",
+          "encoding": "no_op"
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/proxy": {
+          "headers_to_pass": ["Authorization"]
+        },
+        "github.com/devopsfaith/krakend-jose/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/demo-realm/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "audience": ["fiber-app"],
+          "issuer": "http://keycloak:8080/realms/demo-realm",
+          "roles_key": "roles",
+          "roles": ["user"],
+          "propagate_token": true
+        }
+      }
+    },
+    {
+      "endpoint": "/admin",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "output_encoding": "json",
+      "backend": [
+        {
+          "host": ["http://app:3000"],
+          "url_pattern": "/admin",
+          "encoding": "no_op"
+        }
+      ],
+      "extra_config": {
+        "github.com/devopsfaith/krakend/proxy": {
+          "headers_to_pass": ["Authorization"]
+        },
+        "github.com/devopsfaith/krakend-jose/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/demo-realm/protocol/openid-connect/certs",
+          "disable_jwk_security": true,
+          "audience": ["fiber-app"],
+          "issuer": "http://keycloak:8080/realms/demo-realm",
+          "roles_key": "roles",
+          "roles": ["admin"],
           "propagate_token": true
         }
       }

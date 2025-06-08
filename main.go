@@ -88,7 +88,6 @@ func requireRole(role string) fiber.Handler {
 
 // Connect to MongoDB
 func initMongo() {
-	// ... (this function is fine, no changes needed)
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
 		mongoURI = "mongodb://localhost:27017"
@@ -122,8 +121,6 @@ func main() {
 	app.Get("/public", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "This is a public endpoint."})
 	})
-
-	// --- THE JWTWARE MIDDLEWARE HAS BEEN REMOVED ---
 
 	// Protected route: any authenticated user
 	app.Get("/profile", func(c *fiber.Ctx) error {

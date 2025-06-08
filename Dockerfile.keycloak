@@ -1,0 +1,24 @@
+# Stage 1: pull in curl RPMs from UBI9
+FROM registry.access.redhat.com/ubi9 AS curl-installer
+
+# create a temporary rootfs and install curl there
+RUN mkdir -p /mnt/rootfs && \
+    dnf install \
+      --installroot=/mnt/rootfs \
+      curl \
+      --releasever=9 \
+      --setopt install_weak_deps=false \
+      --nodocs -y && \
+    dnf --installroot=/mnt/rootfs clean all && \
+    rpm --root=/mnt/rootfs -e --nodeps setup
+
+# Stage 2: the real Keycloak image
+FROM quay.io/keycloak/keycloak:21.1.1
+
+# copy curl and its libs into the final image
+COPY --from=curl-installer /mnt/rootfs/ /
+
+# run as the default keycloak user
+USER 1000
+
+# everything else (env, command, volumes) comes from docker-compose
