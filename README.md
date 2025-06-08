@@ -58,8 +58,8 @@ sequenceDiagram
 
 ```
 .
-├── docker-compose.yml         # Orchestrates Mongo, Keycloak, Go app, KrakenD
-├── Dockerfile                 # Go application Dockerfile
+├── docker-compose.yml         # Orchestrates Mongo, Keycloak, Backend API, KrakenD
+├── Dockerfile                 # Backend API Dockerfile
 ├── Dockerfile.keycloak        # Custom Keycloak (with curl) Dockerfile
 ├── go.mod                     # Go module definitions
 ├── go.sum
@@ -182,7 +182,7 @@ The script will:
 * `jwt/validator` plugin uses JWKS to validate tokens.
 * `input_headers` + `proxy` plugin forward `Authorization`.
 
-### 3. Go Application (`main.go`)
+### 3. Backend API (`main.go`)
 
 * JWT validation removed—trusted gateway.
 * Uses `ParseUnverified` to extract claims.
